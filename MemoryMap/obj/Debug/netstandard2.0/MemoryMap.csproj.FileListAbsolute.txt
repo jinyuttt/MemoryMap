@@ -1,0 +1,9 @@
+E:\Study\vs\MemoryMap\MemoryMap\bin\Debug\netstandard2.0\MemoryMap.deps.json
+E:\Study\vs\MemoryMap\MemoryMap\bin\Debug\netstandard2.0\MemoryMap.dll
+E:\Study\vs\MemoryMap\MemoryMap\bin\Debug\netstandard2.0\MemoryMap.pdb
+E:\Study\vs\MemoryMap\MemoryMap\obj\Debug\netstandard2.0\MemoryMap.csprojAssemblyReference.cache
+E:\Study\vs\MemoryMap\MemoryMap\obj\Debug\netstandard2.0\MemoryMap.csproj.CoreCompileInputs.cache
+E:\Study\vs\MemoryMap\MemoryMap\obj\Debug\netstandard2.0\MemoryMap.AssemblyInfoInputs.cache
+E:\Study\vs\MemoryMap\MemoryMap\obj\Debug\netstandard2.0\MemoryMap.AssemblyInfo.cs
+E:\Study\vs\MemoryMap\MemoryMap\obj\Debug\netstandard2.0\MemoryMap.dll
+E:\Study\vs\MemoryMap\MemoryMap\obj\Debug\netstandard2.0\MemoryMap.pdb
