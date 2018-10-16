@@ -61,10 +61,12 @@ namespace MemoryMap
             mapPool.InitPool(10);//50M准备；
           
         }
+
         public void InitBuffer(int num=10)
         {
             mapPool.InitPool(num);
         }
+
         public void FreeBuffer(MemoryMapBuffer buffer)
         {
             mapPool.Free(buffer);
@@ -108,6 +110,10 @@ namespace MemoryMap
             long size = DefaultSize;
             FileStream fs = new FileStream(path, FileMode.Open);
             len = fs.Length;
+            //读取文件，capacity参数不能小于文件长度；
+            //但是capacity只是一个值，并不是就需要这么大内存
+            //内存在下一步创建视图时确定大小
+            //需要把视图部分加载到内存
             using (MemoryMappedFile memoryFile = MemoryMappedFile.CreateFromFile(fs, mapName, 0, MemoryMappedFileAccess.Read, HandleInheritability.None, true))
             {
 
@@ -116,6 +122,7 @@ namespace MemoryMap
                     //20M读取
                     //
                     size = len > DefaultSize ? DefaultSize : len;
+                   //offset,size参数决定了当前访问位置及内存中大小。
                     using (var accessor = memoryFile.CreateViewAccessor(offset, size, MemoryMappedFileAccess.Read))
                     {
                         int index = 0;//当前读取
@@ -179,8 +186,13 @@ namespace MemoryMap
             {
                 fs = new FileStream(path, FileMode.Open, FileAccess.Write, FileShare.Read);
             }
+
+            //写入时，尤其是追加数据，capacity必须大于文件长度
+            //写入时，所以要在文件长度上加入写入的数据
+            //但是最后文件是设置的capacity大小
             using (MemoryMappedFile memoryFile = MemoryMappedFile.CreateFromFile(fs, mapName, len+content.Length, MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, false))
             {
+                //offset,size参数决定了当前访问位置及内存中大小。
                 using (var accessor = memoryFile.CreateViewAccessor(len, content.Length))
                 {
                     accessor.WriteArray<byte>(0, content, 0, content.Length);

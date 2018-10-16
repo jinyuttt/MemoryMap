@@ -13,7 +13,7 @@ namespace ConsoleApp1
         static void Main(string[] args)
         {
             MemoryMapStream stream = new MemoryMapStream();
-            stream.ReadAllSegmentFileAsync(@"F:\allfiles\Sharka_Blue_&_Sophie_Moone.avi");
+            stream.ReadAllSegmentFileAsync(@"F:\allfiles\M.avi");
             Thread thread = new Thread(() =>
             {
                 while(!stream.IsComplete)
@@ -23,7 +23,7 @@ namespace ConsoleApp1
                        var buf = stream.GetMemoryMapBuffer();
                         if (buf != null)
                         {
-                            stream.FileStreamAppendFile(@"F:\allfiles\copy\Sharka_Blue_&_Sophie_Moone.avi", buf);
+                            stream.FileStreamAppendFile(@"F:\allfiles\copy\M.avi", buf);
                             buf.Offset = 0;
                             buf.Size = 0;
                             stream.FreeBuffer(buf);
