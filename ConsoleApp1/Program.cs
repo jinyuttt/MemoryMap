@@ -12,28 +12,40 @@ namespace ConsoleApp1
     {
         static void Main(string[] args)
         {
+            DateTime strart = DateTime.Now;
             MemoryMapStream stream = new MemoryMapStream();
-            stream.ReadAllSegmentFileAsync(@"F:\allfiles\M.avi");
+            Task.Factory.StartNew(() => {
+                stream.ReadAllSegmentFileAsync(@"F:\allfiles\M.avi");
+            });
+            int num = 0;
             Thread thread = new Thread(() =>
             {
-                while(!stream.IsComplete)
+                stream.FilePath = @"F:\allfiles\copy\M.avi";
+                while (true)
                 {
-                    while (true)
+                    var buf = stream.GetMemoryMapBuffer();
+                    if (buf != null)
                     {
-                       var buf = stream.GetMemoryMapBuffer();
-                        if (buf != null)
+                        //stream.FileStreamAppendFile(@"F:\allfiles\copy\M.avi", buf);
+                        stream.FileWrite(buf);
+                        buf.OffSet = 0;
+                        buf.Size = 0;
+                        stream.FreeBuffer(buf);
+                        num++;
+                    }
+                    else
+                    {
+                        if(stream.IsAllComplete)
                         {
-                            stream.FileStreamAppendFile(@"F:\allfiles\copy\M.avi", buf);
-                            buf.Offset = 0;
-                            buf.Size = 0;
-                            stream.FreeBuffer(buf);
+                            Console.WriteLine(num);
+                            stream.FileFlush();
+                            break;
                         }
-                        else
-                        {
-                            Thread.Sleep(500);
-                        }
+                        Thread.Sleep(500);
                     }
                 }
+                Console.WriteLine((DateTime.Now - strart).TotalMilliseconds);
+                  
             });
             thread.IsBackground = true;
             thread.Start();

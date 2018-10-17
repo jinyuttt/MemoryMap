@@ -42,7 +42,7 @@ namespace MemoryMap.Buffer
         public override void Free(BaseBuffer<byte[]> buffer)
         {
             MemoryMapBuffer mapBuffer =(MemoryMapBuffer) buffer;
-            mapBuffer.Offset = 0;
+            mapBuffer.OffSet = 0;
             mapBuffer.Size = 0;
             base.Free(mapBuffer);
             

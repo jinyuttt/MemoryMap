@@ -20,7 +20,7 @@ namespace MemoryMap.Buffer
     /// </summary>
    public class MemoryMapBuffer:BaseBuffer<byte[]>
     {
-        public int Offset { get; set; }
+        public int OffSet { get; set; }
         public int Size { get; set; }
 
         public int Capacity { get { return Data.Length; } }

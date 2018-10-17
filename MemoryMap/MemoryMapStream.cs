@@ -4,6 +4,7 @@ using System.IO.MemoryMappedFiles;
 using System.Text;
 using System.IO;
 using MemoryMap.Buffer;
+using System.Threading.Tasks;
 /**
 * 命名空间: MemoryMap 
 * 类 名： MemoryMapStream
@@ -22,11 +23,13 @@ namespace MemoryMap
     /// </summary>
    public class MemoryMapStream
     {
-        MemoryMapPool mapPool = null;
-        private long minSegment = 10 * 1024 * 1024;//10M
-        private long pageSize = 1048576;//1M
-        const long DefaultCapacity = 20 * 1024 * 1024;
+        private MemoryMapPool mapPool = null;
         const long  DefaultSize = 20 * 1024 * 1024;
+        const long  WriteCacheSzie = 20 * 1024 * 1024;
+
+        private  MemoryMapBuffer mapBuffer = null;
+        private MemoryMapBuffer copyBuffer = null;
+
 
         /// <summary>
         /// 读取数据
@@ -39,6 +42,12 @@ namespace MemoryMap
         private object lock_obj = new object();
 
         /// <summary>
+        /// 写入文件时文件路径
+        /// 采用缓冲写入
+        /// </summary>
+        public string FilePath { get; set; }
+
+        /// <summary>
         /// 当前缓存大小
         /// </summary>
         public int BufferSize { get { return mapPool.BufferSize; } }
@@ -46,7 +55,7 @@ namespace MemoryMap
         /// <summary>
         /// 读取整个文件结束
         /// </summary>
-        public bool IsAllComplete { get; set; }
+        public bool IsAllComplete { get { return IsComplete && lstData.Count == 0; } }
 
         /// <summary>
         /// 完成当前读取
@@ -56,9 +65,13 @@ namespace MemoryMap
         public MemoryMapStream()
         {
             mapPool = new MemoryMapPool();
+            mapBuffer = new MemoryMapBuffer();
+            copyBuffer = new MemoryMapBuffer();
             mapPool.ArrayBufSize = 5 * 1024 * 1024;//1个buffer5M;
             mapPool.MaxBufferSize = 100;//500M缓存;
             mapPool.InitPool(10);//50M准备；
+            mapBuffer.Data = new byte[WriteCacheSzie];
+            copyBuffer.Data = new byte[WriteCacheSzie];
           
         }
 
@@ -136,9 +149,9 @@ namespace MemoryMap
                             if (mapPool.TryGetBuffer(out item, 1000))
                             {
                                 MemoryMapBuffer buf = (MemoryMapBuffer)item;
-                                r = accessor.ReadArray<byte>(index, buf.Data, buf.Offset, buf.Capacity - buf.Size);
+                                r = accessor.ReadArray<byte>(index, buf.Data, buf.OffSet, buf.Capacity - buf.Size);
                                 index += r;
-                                buf.Size = buf.Capacity - buf.Offset;
+                                buf.Size = buf.Capacity - buf.OffSet;
                                 lock (lock_obj)
                                 {
                                     lstData.Add(buf);
@@ -228,7 +241,7 @@ namespace MemoryMap
             {
                 using (var accessor = memoryFile.CreateViewAccessor(len, buffer.Size))
                 {
-                    accessor.WriteArray<byte>(0, buffer.Data, buffer.Offset, buffer.Size);
+                    accessor.WriteArray<byte>(0, buffer.Data, buffer.OffSet, buffer.Size);
                 }
             }
             fs.Close();
@@ -257,16 +270,67 @@ namespace MemoryMap
        /// </summary>
        /// <param name="path"></param>
        /// <param name="buffer"></param>
-        public void FileStreamAppendFile(string path, MemoryMapBuffer buffer)
+        public  void FileStreamAppendFile(string path, MemoryMapBuffer buffer)
         {
             FileStream fileStream = new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
 
-            fileStream.WriteAsync(buffer.Data, buffer.Offset, buffer.Size);
-
+            fileStream.Write(buffer.Data, buffer.OffSet, buffer.Size);
+          
             fileStream.Close();
 
             fileStream.Dispose();
         }
 
+        /// <summary>
+        /// 写入文件
+        /// 需要设置FilePath属性
+        /// </summary>
+        /// <param name="content"></param>
+        public  void FileWrite(byte[]content)
+        {
+            if(mapBuffer.Size+content.Length<=WriteCacheSzie)
+            {
+                Array.Copy(content,0,mapBuffer.Data,mapBuffer.Size,content.Length);
+                mapBuffer.Size += content.Length;
+            }
+            else
+            {
+               
+                FileStreamAppendFile(FilePath, mapBuffer);
+                mapBuffer.OffSet = 0;
+                mapBuffer.Size = 0;
+                Array.Copy(content, 0, mapBuffer.Data, mapBuffer.Size, content.Length);
+                mapBuffer.Size += content.Length;
+            }
+        }
+
+        public  void FileWrite(MemoryMapBuffer buffer)
+        {
+            if (mapBuffer.Size + buffer.Size <= WriteCacheSzie)
+            {
+                Array.Copy(buffer.Data, buffer.OffSet, mapBuffer.Data, mapBuffer.Size, buffer.Size);
+                mapBuffer.Size += buffer.Size;
+            }
+            else
+            {
+                   Array.Copy(mapBuffer.Data, mapBuffer.OffSet, copyBuffer.Data, 0, mapBuffer.Size);
+                   copyBuffer.Size = mapBuffer.Size;
+                   Task.Factory.StartNew(() => { 
+                   FileStreamAppendFile(FilePath, copyBuffer);
+                 });
+ 
+                mapBuffer.Size = 0;
+                Array.Copy(buffer.Data, buffer.OffSet, mapBuffer.Data, mapBuffer.Size, buffer.Size);
+                mapBuffer.Size += buffer.Size;
+            }
+        }
+        /// <summary>
+        /// 写入文件
+        /// 需要设置FilePath属性
+        /// </summary>
+        public void FileFlush()
+        {
+            FileStreamAppendFile(FilePath, mapBuffer);
+        }
     }
 }
