@@ -27,7 +27,7 @@ namespace ConsoleApp1
                     var buf = stream.GetMemoryMapBuffer();
                     if (buf != null)
                     {
-                        //stream.FileStreamAppendFile(@"F:\allfiles\copy\M.avi", buf);
+                     
                         stream.FileWrite(buf);
                        // stream.MemoryMapAppendFile(@"F:\allfiles\copy\M.avi", buf);
                         buf.OffSet = 0;

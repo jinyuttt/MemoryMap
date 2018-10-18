@@ -25,7 +25,7 @@ namespace MemoryMap
     {
         private MemoryMapPool mapPool = null;
         const long  DefaultSize = 20 * 1024 * 1024;//内存映射视图大小
-        const long  WriteCacheSzie = 20 * 1024 * 1024;//FileStream写入大小
+        const long  WriteCacheSzie = 20 * 1024 * 1024;//FileStream方法写入大小
         const int fsCacheSize = 5 * 1024 * 1024;//FileStream内部缓存大小
         private  MemoryMapBuffer mapBuffer = null;
         private MemoryMapBuffer copyBuffer = null;
@@ -102,7 +102,8 @@ namespace MemoryMap
             }
         }
 
-     
+        #region 内存映射读取
+
         /// <summary>
         /// 读取文件
         /// 20M分段读取
@@ -234,13 +235,16 @@ namespace MemoryMap
             }
         }
 
+        #endregion
+
+        #region FileStream 直接写入
 
         /// <summary>
         /// 文件流写入
         /// </summary>
         /// <param name="path"></param>
         /// <param name="content"></param>
-        public  void FileStreamAppendFile(string path, byte[] content )
+        public void FileStreamAppendFile(string path, byte[] content )
         {
             FileStream fileStream = new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
 
@@ -265,12 +269,16 @@ namespace MemoryMap
             }
         }
 
+        #endregion
+
+
+        #region FileStream放入缓存写入
         /// <summary>
         /// 写入文件
         /// 需要设置FilePath属性
         /// </summary>
         /// <param name="content"></param>
-        public  void FileWrite(byte[]content)
+        public void FileWrite(byte[]content)
         {
             
             if(mapBuffer.Size+content.Length<=WriteCacheSzie)
@@ -326,6 +334,10 @@ namespace MemoryMap
             FileStreamAppendFile(FilePath, mapBuffer);
         }
 
+        #endregion
+
+
+        #region FileStream 读文件
         /// <summary>
         /// FileStream读取数据
         /// </summary>
@@ -355,5 +367,7 @@ namespace MemoryMap
             IsComplete = true;
 
         }
+
+        #endregion
     }
 }
