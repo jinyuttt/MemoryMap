@@ -15,7 +15,8 @@ namespace ConsoleApp1
             DateTime strart = DateTime.Now;
             MemoryMapStream stream = new MemoryMapStream();
             Task.Factory.StartNew(() => {
-                stream.ReadAllSegmentFileAsync(@"F:\allfiles\M.avi");
+                // stream.ReadAllSegmentFileAsync(@"F:\allfiles\M.avi");
+                stream.FileRead(@"F:\allfiles\M.avi");
             });
             int num = 0;
             Thread thread = new Thread(() =>
@@ -28,6 +29,7 @@ namespace ConsoleApp1
                     {
                         //stream.FileStreamAppendFile(@"F:\allfiles\copy\M.avi", buf);
                         stream.FileWrite(buf);
+                       // stream.MemoryMapAppendFile(@"F:\allfiles\copy\M.avi", buf);
                         buf.OffSet = 0;
                         buf.Size = 0;
                         stream.FreeBuffer(buf);
